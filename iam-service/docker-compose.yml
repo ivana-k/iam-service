@@ -1,0 +1,51 @@
+version: "3.8"
+
+services:
+
+  iam-service:
+    build:
+      context: ../
+      dockerfile: ./iam-service/Dockerfile
+    image: iam-service
+    container_name: iam-service
+    hostname: ${IAM_HOSTNAME}
+    expose:
+      - ${IAM_PORT}
+    ports:
+      - ${IAM_PORT}:${IAM_PORT}
+    environment:
+      - IAM_PORT=${IAM_PORT}
+      - NEO4J_HOSTNAME=${NEO4J_HOSTNAME}
+      - NEO4J_BOLT_PORT=${NEO4J_BOLT_PORT}
+      - NEO4J_DBNAME=${NEO4J_DBNAME}
+    networks:
+      - network1
+    depends_on:
+      - neo4j
+
+  neo4j:
+    image: neo4j:4.4.12
+    container_name: neo4j-auth
+    hostname: ${NEO4J_HOSTNAME}
+    restart: on-failure
+    expose:
+      - ${NEO4J_HTTP_PORT}
+      - ${NEO4J_BOLT_PORT}
+    ports:
+      - ${NEO4J_HTTP_PORT}:${NEO4J_HTTP_PORT}
+      - ${NEO4J_BOLT_PORT}:${NEO4J_BOLT_PORT}
+    environment:
+      - NEO4J_apoc_export_file_enabled=${NEO4J_apoc_export_file_enabled}
+      - NEO4J_apoc_import_file_enabled=${NEO4J_apoc_import_file_enabled}
+      - NEO4J_apoc_import_file_use__neo4j__config=${NEO4J_apoc_import_file_use__neo4j__config}
+      - NEO4JLABS_PLUGINS=${NEO4J_PLUGINS}
+      - NEO4J_dbms_connector_bolt_listen__address=:${NEO4J_BOLT_PORT}
+      - NEO4J_dbms_connector_http_listen__address=:${NEO4J_HTTP_PORT}
+      - NEO4J_dbms_security_auth__enabled=${NEO4J_AUTH_ENABLED}
+    networks:
+      - network1
+
+networks:
+  network1:
+    driver: bridge
+    external: true
