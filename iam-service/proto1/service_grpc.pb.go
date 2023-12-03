@@ -22,6 +22,7 @@ const (
 	AuthService_RegisterUser_FullMethodName = "/proto1.AuthService/RegisterUser"
 	AuthService_LoginUser_FullMethodName    = "/proto1.AuthService/LoginUser"
 	AuthService_Authorize_FullMethodName    = "/proto1.AuthService/Authorize"
+	AuthService_VerifyToken_FullMethodName  = "/proto1.AuthService/VerifyToken"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -31,6 +32,7 @@ type AuthServiceClient interface {
 	RegisterUser(ctx context.Context, in *User, opts ...grpc.CallOption) (*RegisterResp, error)
 	LoginUser(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginResp, error)
 	Authorize(ctx context.Context, in *AuthorizationReq, opts ...grpc.CallOption) (*AuthorizationResp, error)
+	VerifyToken(ctx context.Context, in *Token, opts ...grpc.CallOption) (*VerifyResp, error)
 }
 
 type authServiceClient struct {
@@ -68,6 +70,15 @@ func (c *authServiceClient) Authorize(ctx context.Context, in *AuthorizationReq,
 	return out, nil
 }
 
+func (c *authServiceClient) VerifyToken(ctx context.Context, in *Token, opts ...grpc.CallOption) (*VerifyResp, error) {
+	out := new(VerifyResp)
+	err := c.cc.Invoke(ctx, AuthService_VerifyToken_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility
@@ -75,6 +86,7 @@ type AuthServiceServer interface {
 	RegisterUser(context.Context, *User) (*RegisterResp, error)
 	LoginUser(context.Context, *LoginReq) (*LoginResp, error)
 	Authorize(context.Context, *AuthorizationReq) (*AuthorizationResp, error)
+	VerifyToken(context.Context, *Token) (*VerifyResp, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -90,6 +102,9 @@ func (UnimplementedAuthServiceServer) LoginUser(context.Context, *LoginReq) (*Lo
 }
 func (UnimplementedAuthServiceServer) Authorize(context.Context, *AuthorizationReq) (*AuthorizationResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Authorize not implemented")
+}
+func (UnimplementedAuthServiceServer) VerifyToken(context.Context, *Token) (*VerifyResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VerifyToken not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 
@@ -158,6 +173,24 @@ func _AuthService_Authorize_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_VerifyToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Token)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).VerifyToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_VerifyToken_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).VerifyToken(ctx, req.(*Token))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -176,6 +209,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Authorize",
 			Handler:    _AuthService_Authorize_Handler,
+		},
+		{
+			MethodName: "VerifyToken",
+			Handler:    _AuthService_VerifyToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

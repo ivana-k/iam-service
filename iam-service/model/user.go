@@ -6,14 +6,13 @@ import (
 )
 
 type User struct {
-	Id int `json:"id"`
+	Id string `json:"id"`
 	Name string `json:"name"`
 	Surname string `json:"surname"`
 	Email string `json:"email"`
 	Password string `json:"password"`
 	Org string `json:"org"`
-	Permission string `json:"permission"`
-	//Roles []string `json:"roles"`
+	Username string `json:"username"`
 }
 
 type Users []*User

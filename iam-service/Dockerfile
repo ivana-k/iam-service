@@ -23,9 +23,6 @@ COPY ./iam-service/ .
 # Build the Go app
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 
-
-
-
 ######## Start a new stage from scratch #######
 FROM alpine:latest  
 
@@ -39,3 +36,10 @@ EXPOSE 8001
 
 # Command to run the executable
 CMD ["./main"] 
+
+#FROM cassandra:latest
+#COPY ./iam-service/model/db/create_schema.cql ./create_schema.cql
+#ENV CASSANDRA_BROADCAST_ADDRESS="cassandra"
+#CMD ["cqlsh", "cassandra", "-f", "/create_schema.cql"]
+
+

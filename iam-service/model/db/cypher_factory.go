@@ -19,7 +19,7 @@ func NewSimpleCypherFactory() CypherFactory {
 }
 
 const ncCreateResourceCypher = `
-CREATE (u:User {id: $id, name: $name, surname: $surname, email: $email, password: $password, org: $org, permission: $permission}) RETURN u
+CREATE (u:User {id: $id, name: $name, surname: $surname, email: $email, password: $password, org: $org, permission: $permission, username: $username}) RETURN u
 `
 
 func (f simpleCypherFactory) createResource(req model.User) (string, map[string]interface{}) {
@@ -31,7 +31,7 @@ func (f simpleCypherFactory) createResource(req model.User) (string, map[string]
 			"email":     req.Email,
 			"password":     req.Password,
 			"org":     req.Org,
-			"permission":     req.Permission,
+			"username": req.Username,
 }
 }
 
@@ -46,13 +46,16 @@ func (f simpleCypherFactory) getUsers() (string, map[string]interface{}) {
 
 const ncFindUser = `
 MATCH (user:User)
-WHERE user.email = $email AND user.password = $password
+WHERE user.username = $username AND user.password = $password
 RETURN user AS user, user.name AS name
 `
 func (f simpleCypherFactory) findUser(req model.LoginReq) (string, map[string]interface{}) {
 	return ncFindUser,
 		map[string]interface{}{
-			"email":      req.Email,
+			"username":      req.Username,
 			"password":   req.Password,
 }
 }
+
+
+

@@ -19,7 +19,7 @@ services:
       - NEO4J_BOLT_PORT=${NEO4J_BOLT_PORT}
       - NEO4J_DBNAME=${NEO4J_DBNAME}
     networks:
-      - network1
+      - network
     depends_on:
       - neo4j
 
@@ -43,9 +43,28 @@ services:
       - NEO4J_dbms_connector_http_listen__address=:${NEO4J_HTTP_PORT}
       - NEO4J_dbms_security_auth__enabled=${NEO4J_AUTH_ENABLED}
     networks:
-      - network1
+      - network
+  
+  valut:
+    image: vault:latest
+    container_name: vault
+    hostname: ${VAULT_HOSTNAME}
+    restart: on-failure
+    expose:
+      - ${VAULT_HTTP_PORT}
+    ports:
+      - ${VAULT_HTTP_PORT}:${VAULT_HTTP_PORT}
+    volumes:
+        - ./iam-service/vault/config:/vault/config
+        - ./iam-service/vault/data:/vault/data
+    environment:
+      - VAULT_ADDR=http://0.0.0.0:8200
+      - VAULT_API_ADDR=http://0.0.0.0:8200
+      - VAULT_ADDRESS=http://0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
+    command: vault server -config=./iam-service/vault/config/vault.json
 
 networks:
-  network1:
+  network:
     driver: bridge
-    external: true

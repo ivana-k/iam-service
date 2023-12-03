@@ -11,13 +11,19 @@ func UserToModel(req *User) (*model.User, error) {
 		Email: 				 req.Email,
 		Password:            req.Password,
 		Org:            	 req.Org,
-		Permission:          req.Permission,
+		Username:            req.Username,
 	}, nil
 }
 
 func LoginToModel(req *LoginReq) (*model.LoginReq, error) {
 	return &model.LoginReq{
-		Email: 				 req.Email,
-		Password:            req.Password,
+		Username: 			req.Username,
+		Password:           req.Password,
+	}, nil
+}
+
+func TokenToModel(req *Token) (*model.Token, error) {
+	return &model.Token{
+		Token: 			req.Token,
 	}, nil
 }

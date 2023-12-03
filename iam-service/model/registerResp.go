@@ -6,7 +6,7 @@ type RegisterResp struct {
 }
 
 type LoginReq struct {
-	Email string
+	Username string
 	Password string
 }
 
@@ -26,4 +26,12 @@ type AuthorizationReq struct {
 type AuthorizationResp struct {
 	Authorized bool
 	Error      error
+}
+
+type Token struct {
+	Token string
+}
+
+type VerifyResp struct {
+	Verified bool
 }

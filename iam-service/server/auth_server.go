@@ -20,13 +20,6 @@ func NewAuthServiceServer(service service.AuthService) (proto1.AuthServiceServer
 
 // videti kako poslati gRPC 
 func (o *AuthServiceServer) Authorize(ctx context.Context, req *proto1.AuthorizationReq) (*proto1.AuthorizationResp, error) {
-	/*reqDomain, err := proto.AuthorizationReqToDomain(req)
-	if err != nil {
-		return nil, err
-	}
-	resp := o.service.Authorize(*reqDomain)
-	log.Println(resp)
-	return &proto.AuthorizationResp{Authorized: resp.Authorized}, resp.Error*/
 	return &proto1.AuthorizationResp{Authorized: true}, nil
 }
 
@@ -35,9 +28,10 @@ func (o *AuthServiceServer) RegisterUser(ctx context.Context, req *proto1.User) 
 	if err != nil {
 		return nil, err
 	}
-	resp := o.service.RegisterUser(*user)
+	resp := o.service.RegisterUser(ctx, *user)
 	log.Println(resp.User)
-	return &proto1.RegisterResp{User: &proto1.User{Id: int64(resp.User.Id), 
+	return &proto1.RegisterResp{User: &proto1.User{
+		Id: resp.User.Id, 
 		Name: resp.User.Name,
 		Surname: resp.User.Surname,
 		Password: resp.User.Password,
@@ -54,4 +48,18 @@ func (o *AuthServiceServer) LoginUser(ctx context.Context, req *proto1.LoginReq)
 	resp := o.service.LoginUser(*user)
 	log.Println(resp)
 	return &proto1.LoginResp{Token: resp.Token}, nil
+}
+
+func (o *AuthServiceServer) VerifyToken(ctx context.Context, req *proto1.Token) (*proto1.VerifyResp, error) {
+	token, err := proto1.TokenToModel(req)
+
+	if err != nil {
+		return nil, err
+	}
+	
+	resp := o.service.VerifyToken(*token)
+	log.Println(resp)
+	return &proto1.VerifyResp{Token: &proto1.InternalToken{Verified: resp.Verified,
+		Jwt: resp.Jwt,
+		}}, nil
 }

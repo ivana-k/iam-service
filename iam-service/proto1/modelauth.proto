@@ -26,11 +26,25 @@ message Attribute {
 }
 
 message User {
-  int64 id = 1;
+  string id = 1;
   string name = 2;
   string surname = 3;
   string email = 4;
   string password = 5;
   string org = 6;
-  string permission = 7;
+  string username = 7;
+}
+
+message Token {
+  string token = 1;
+}
+
+message Org {
+  string id = 1;
+  string name = 2;
+}
+
+message Permission {
+  string id = 1;
+  string name = 2;
 }

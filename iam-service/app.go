@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"iam-service/configs"
+	"iam-service/vault"
 	"iam-service/model"
 	"iam-service/proto1"
 	"iam-service/model/db"
@@ -22,7 +23,9 @@ type app struct {
 	grpcServer                *grpc.Server
 	authServiceServer         proto1.AuthServiceServer
 	authService 			  *service.AuthService
-	authRepo                  model.UserRepo		// da li mi treba ovaj ili db/repo
+	vaultService 			  *vault.VaultClientService
+	authRepo                  model.UserRepo		
+	cm						  *db.CassandraManager
 	shutdownProcesses         []func()
 	gracefulShutdownProcesses []func(wg *sync.WaitGroup)
 }
@@ -73,19 +76,12 @@ func (a *app) GracefulStop(ctx context.Context) {
 }
 
 func (a *app) init() {
-	manager, err := db.NewTransactionManager(
-		a.config.Neo4j().Uri(),
-		a.config.Neo4j().DbName())
-	if err != nil {
-		log.Fatalln(err)
-	}
-	a.shutdownProcesses = append(a.shutdownProcesses, func() {
-		log.Println("closing neo4j conn")
-		manager.Stop()
-	})
+	manager := db.NewCassandraManager()
+	a.cm = manager
+	//a.cm.InitDb()
+	a.initUserRepo(a.cm)
 
-	a.initUserRepo(manager)
-
+	a.initVaultClientService()
 	a.initAuthService()
 
 	a.initAuthServiceServer()
@@ -114,22 +110,28 @@ func (a *app) initAuthServiceServer() {
 	a.authServiceServer = server
 }
 
+func (a *app) initVaultClientService() {
+	vaultService, err := vault.NewVaultClientService()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	a.vaultService = vaultService
+}
+
 func (a *app) initAuthService() {
 	if a.authRepo == nil {
 		log.Fatalln("rhabac repo is nil")
 	}
-	authService, err := service.NewAuthService(a.authRepo)
+	authService, err := service.NewAuthService(a.authRepo, a.vaultService)
 	if err != nil {
 		log.Fatalln(err)
 	}
 	a.authService = authService
 }
 
-
-func (a *app) initUserRepo(manager *db.TransactionManager) {
-	a.authRepo = db.NewUserRepo(manager, db.NewSimpleCypherFactory())
+func (a *app) initUserRepo(manager *db.CassandraManager) {
+	a.authRepo = db.NewUserRepo(manager)
 }
-
 
 func (a *app) startGrpcServer() error {
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%s", a.config.Server().Port()))
