@@ -221,15 +221,25 @@ func (cm CassandraManager) CreateOrgUser(org_uuid string, user_uuid string) (boo
 		log.Fatal("Cannot find permissions")
 	}
 
+	mapPermissions := arrayToSet(permissions)
 	query := cm.session.Query(createOrgUserQuery,
         org_uuid, 
 		user_uuid, 
-		permissions,
+		mapPermissions,
 		)
 
     if err := query.Exec(); err != nil {
+		log.Println(err)
         return false, err
     }
 
 	return true, nil
+}
+
+func arrayToSet(arr []string) map[string]struct{} {
+	set := make(map[string]struct{})
+	for _, value := range arr {
+		set[value] = struct{}{}
+	}
+	return set
 }

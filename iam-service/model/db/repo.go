@@ -53,6 +53,7 @@ func (store UserRepo) CreateUser(ctx context.Context, req model.User) model.Regi
 	}
 
 	permissions, err := store.manager.GetUserPermissions(foundOrg.Id, userId)
+	log.Println(permissions)
 
 	if err != nil {
 		log.Printf("GetUserPermissions failed")
@@ -68,6 +69,8 @@ func (store UserRepo) CreateUser(ctx context.Context, req model.User) model.Regi
 	}, Error: nil}		
 
 }
+
+
 
 func (store UserRepo) LoginUser(ctx context.Context, req model.LoginReq) model.LoginResp {
 	/*cypher, params := store.factory.findUser(req)

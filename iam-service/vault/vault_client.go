@@ -28,7 +28,7 @@ func initClient() *vault.Client {
 		vault.WithRequestTimeout(30*time.Second),
 	)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	// check if its initialized
@@ -36,7 +36,7 @@ func initClient() *vault.Client {
 		context.Background(),
 	)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	initStatus := initResp.Data["initialized"].(bool)
@@ -46,7 +46,7 @@ func initClient() *vault.Client {
 		log.Println(os.Getenv("VAULT_DEV_ROOT_TOKEN_ID"))
 		rootToken:=os.Getenv("VAULT_DEV_ROOT_TOKEN_ID")
 		if err := client.SetToken(rootToken); err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 
 		respAuth, err := client.System.AuthEnableMethod(
@@ -59,7 +59,7 @@ func initClient() *vault.Client {
 			},
 		)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 	
 		log.Println(respAuth)
@@ -78,7 +78,7 @@ func initClient() *vault.Client {
 		},
 	)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	keysArray, ok := resp.Data["keys"].([]interface{})
@@ -107,7 +107,7 @@ func initClient() *vault.Client {
 			},
 		)
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 
 		log.Println(respUseal.Data)
@@ -124,7 +124,7 @@ func initClient() *vault.Client {
 		},
 	)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	log.Println(respAuth)

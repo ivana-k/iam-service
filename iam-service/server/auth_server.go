@@ -29,7 +29,7 @@ func (o *AuthServiceServer) RegisterUser(ctx context.Context, req *proto1.User) 
 		return nil, err
 	}
 	resp := o.service.RegisterUser(ctx, *user)
-	log.Println(resp.User)
+	log.Println(resp.Error)
 	return &proto1.RegisterResp{User: &proto1.User{
 		Id: resp.User.Id, 
 		Name: resp.User.Name,

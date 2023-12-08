@@ -5,7 +5,7 @@ FROM golang:latest as builder
 WORKDIR /app
 
 # Copy go mod and sum files
-COPY ./iam-service/go.mod ./iam-service/go.sum ./
+COPY ./iam-service/iam-service/go.mod ./iam-service/iam-service/go.sum ./
 
 # Copy the local dependency
 COPY ./oort ../oort
@@ -18,7 +18,7 @@ COPY ./oort ../oort
 COPY ./magnetar ../magnetar
 
 # Copy everything from the current directory to the Working Directory inside the container
-COPY ./iam-service/ .
+COPY ./iam-service/iam-service/ .
 
 # Build the Go app
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .

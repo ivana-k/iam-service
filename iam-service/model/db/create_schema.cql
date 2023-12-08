@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS apollo.org (
     id UUID PRIMARY KEY,
     name TEXT
 );
-CREATE INDEX ON org (name);
+CREATE INDEX ON apollo.org (name);
 
 CREATE TABLE IF NOT EXISTS apollo.permission (
     id UUID PRIMARY KEY,

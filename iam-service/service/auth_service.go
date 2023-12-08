@@ -33,12 +33,12 @@ func (h AuthService) RegisterUser(ctx context.Context, req model.User) model.Reg
 			return model.RegisterResp{User: model.User{}, Error: err}
 		}
 
-		userPermissions := h.repo.GetUserPermissions(ctx, registerResp.User.Org, registerResp.User.Id)
-		
 		// ovde ti trebaju org_id i user_id iz kasandre
+		log.Println(registerResp.User.Permissions)
 		client.CreatePolicyAsync(registerResp.User.Org, 
 								registerResp.User.Username, 
-								getPermissionsForOort(userPermissions))
+								getPermissionsForOort(registerResp.User.Permissions))
+							
 		
 		refClient.RegisterUser(req.Username, req.Password, []string{"org.add"})
 	}
