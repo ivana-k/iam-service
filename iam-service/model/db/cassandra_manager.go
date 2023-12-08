@@ -19,7 +19,7 @@ func NewCassandraManager() *CassandraManager {
 
 func Connect() *gocql.Session {
 	cluster := gocql.NewCluster("cassandra")
-	//cluster.Keyspace = "system"
+	cluster.Keyspace = "apollo"
 	
 	cluster.Consistency = gocql.Quorum
 
@@ -29,8 +29,6 @@ func Connect() *gocql.Session {
 		return nil
 	}
 
-	
-	//cluster.Keyspace = "apollo"
 	//defer session.Close()
 
 	return session
