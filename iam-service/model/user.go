@@ -13,6 +13,7 @@ type User struct {
 	Password string `json:"password"`
 	Org string `json:"org"`
 	Username string `json:"username"`
+	Permissions []string
 }
 
 type Users []*User

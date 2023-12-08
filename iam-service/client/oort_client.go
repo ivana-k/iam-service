@@ -93,17 +93,32 @@ func GetGrantedPermissions(user string) []*oort.GrantedPermission {
 	return resp.Permissions
 }
 
-/*func CreatePolicyAsync() {
-	err := administratorAsync.SendRequest(&oort.CreatePolicyReq{
-		SubjectScope: group,
-		ObjectScope:  parentNamespace,
-		Permission:   getConfigPerm,
-	}, func(resp *oort.AdministrationAsyncResp) {
-		if len(resp.Error) > 0 {
-			log.Println(resp.Error)
-		}
-	})
+func CreatePolicyAsync(org_id string, user string, permissions []*oort.Permission) {
+	administratorAsync, err := oort.NewAdministrationAsyncClient("oort:4222")
+
 	if err != nil {
 		log.Fatalln(err)
 	}
-}*/
+
+	for _, perm := range permissions {
+		err := administratorAsync.SendRequest(&oort.CreatePolicyReq{
+			SubjectScope: &oort.Resource{
+				Id:   user,
+				Kind: "user",
+			},
+			ObjectScope:  &oort.Resource{
+				Id:   org_id,
+				Kind: "user-group",
+			},
+			Permission:   perm,
+		}, func(resp *oort.AdministrationAsyncResp) {
+			if len(resp.Error) > 0 {
+				log.Println(resp.Error)
+			}
+		})
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}
+	
+}

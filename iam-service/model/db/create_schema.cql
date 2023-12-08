@@ -31,7 +31,8 @@ CREATE TABLE IF NOT EXISTS user (
 CREATE TABLE IF NOT EXISTS org_user (
     org_id UUID,
     user_id UUID,
-    permissions SET<TEXT>, 
+    permissions SET<TEXT>,
+    is_owner BOOLEAN DEFAULT false,
     PRIMARY KEY (org_id, user_id)
 );
 

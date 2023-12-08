@@ -78,7 +78,8 @@ func (a *app) GracefulStop(ctx context.Context) {
 func (a *app) init() {
 	manager := db.NewCassandraManager()
 	a.cm = manager
-	//a.cm.InitDb()
+	a.cm.InitDb()
+	a.cm.SeedDb()
 	a.initUserRepo(a.cm)
 
 	a.initVaultClientService()

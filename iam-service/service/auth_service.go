@@ -32,6 +32,14 @@ func (h AuthService) RegisterUser(ctx context.Context, req model.User) model.Reg
 			log.Printf("Error while creating inheritance rel: %v", err)
 			return model.RegisterResp{User: model.User{}, Error: err}
 		}
+
+		userPermissions := h.repo.GetUserPermissions(ctx, registerResp.User.Org, registerResp.User.Id)
+		
+		// ovde ti trebaju org_id i user_id iz kasandre
+		client.CreatePolicyAsync(registerResp.User.Org, 
+								registerResp.User.Username, 
+								getPermissionsForOort(userPermissions))
+		
 		refClient.RegisterUser(req.Username, req.Password, []string{"org.add"})
 	}
 
@@ -80,6 +88,21 @@ func transformPermissions(permissions []*oort.GrantedPermission) string {
 	}
 	
 	return transformed
+}
+
+func getPermissionsForOort(permissions []string) []*oort.Permission{
+	var oortPermissions []*oort.Permission
+
+	for _,perm := range permissions {
+		oortPerm := &oort.Permission{
+			Name:      perm,
+			Kind:      oort.Permission_ALLOW,
+			Condition: &oort.Condition{Expression: ""},
+		}
+		oortPermissions = append(oortPermissions, oortPerm)
+	}
+
+	return oortPermissions
 }
 
 

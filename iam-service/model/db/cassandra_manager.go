@@ -19,7 +19,7 @@ func NewCassandraManager() *CassandraManager {
 
 func Connect() *gocql.Session {
 	cluster := gocql.NewCluster("cassandra")
-	cluster.Keyspace = "apollo"
+	//cluster.Keyspace = "system"
 	
 	cluster.Consistency = gocql.Quorum
 
@@ -29,13 +29,30 @@ func Connect() *gocql.Session {
 		return nil
 	}
 
+	
+	//cluster.Keyspace = "apollo"
 	//defer session.Close()
 
 	return session
 }
 
 func (cm CassandraManager) InitDb() {
-	err := cm.session.Query("CREATE TABLE IF NOT EXISTS org (id UUID PRIMARY KEY, name TEXT );").Exec()
+	err := cm.session.Query("CREATE KEYSPACE IF NOT EXISTS apollo WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };").Exec()
+	if err != nil {
+		log.Println(err)
+	}
+
+	err = cm.session.Query("USE apollo;").Exec()
+	if err != nil {
+		log.Println(err)
+	}
+
+	err = cm.session.Query("CREATE TABLE IF NOT EXISTS org (id UUID PRIMARY KEY, name TEXT );").Exec()
+	if err != nil {
+		log.Println(err)
+	}
+
+	err = cm.session.Query("CREATE INDEX ON org (name);").Exec()
 	if err != nil {
 		log.Println(err)
 	}
@@ -51,6 +68,48 @@ func (cm CassandraManager) InitDb() {
 	}
 
 	err = cm.session.Query("CREATE TABLE IF NOT EXISTS org_user (org_id UUID, user_id UUID, permissions SET<TEXT>, PRIMARY KEY (org_id, user_id));").Exec()
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func (cm CassandraManager) SeedDb() {
+	err := cm.session.Query("INSERT INTO permission (id, name) VALUES (uuid(), 'config.get') IF NOT EXISTS;").Exec()
+	if err != nil {
+		log.Println(err)
+	}
+
+	err = cm.session.Query("INSERT INTO permission (id, name) VALUES (uuid(), 'config.put') IF NOT EXISTS;").Exec()
+	if err != nil {
+		log.Println(err)
+	}
+
+	err = cm.session.Query("INSERT INTO permission (id, name) VALUES (uuid(), 'namespace.putconfig') IF NOT EXISTS;").Exec()
+	if err != nil {
+		log.Println(err)
+	}
+
+	err = cm.session.Query("INSERT INTO permission (id, name) VALUES (uuid(), 'node.get') IF NOT EXISTS;").Exec()
+	if err != nil {
+		log.Println(err)
+	}
+
+	err = cm.session.Query("INSERT INTO permission (id, name) VALUES (uuid(), 'node.put') IF NOT EXISTS;").Exec()
+	if err != nil {
+		log.Println(err)
+	}
+
+	err = cm.session.Query("INSERT INTO permission (id, name) VALUES (uuid(), 'node.label.put') IF NOT EXISTS;").Exec()
+	if err != nil {
+		log.Println(err)
+	}
+
+	err = cm.session.Query("INSERT INTO permission (id, name) VALUES (uuid(), 'node.label.get') IF NOT EXISTS;").Exec()
+	if err != nil {
+		log.Println(err)
+	}
+
+	err = cm.session.Query("INSERT INTO permission (id, name) VALUES (uuid(), 'node.label.delete') IF NOT EXISTS;").Exec()
 	if err != nil {
 		log.Println(err)
 	}
@@ -114,6 +173,26 @@ func (cm CassandraManager) GetAllPermissions() ([]string, error) {
 	return permissions, nil
 }
 
+const findUserPermQuery = `SELECT permissions FROM org_user WHERE org_id = ? AND user_id = ?;`
+func (cm CassandraManager) GetUserPermissions(org_id string, user_id string) ([]string, error) {
+	query := cm.session.Query(findUserPermQuery, org_id, user_id)
+
+	var permissions map[string]struct{}
+	var foundPermissions []string
+	
+	if err := query.Scan(&permissions); err != nil {
+		log.Fatal(err)
+	}
+
+	log.Print("Permissions: ")
+	for permission := range permissions {
+		log.Printf("%s ", permission)
+		foundPermissions = append(foundPermissions, permission)
+	}
+
+	return foundPermissions, nil
+}
+
 const insertOrgQuery = `
 INSERT INTO org (id, name)
 VALUES (?, ?)`
@@ -139,7 +218,7 @@ VALUES (?, ?, ?)`
 func (cm CassandraManager) CreateOrgUser(org_uuid string, user_uuid string) (bool, error) {
 	permissions, err:= cm.GetAllPermissions()
 	log.Printf("Array: %v", permissions)
-	
+
 	if err != nil {
 		log.Fatal("Cannot find permissions")
 	}

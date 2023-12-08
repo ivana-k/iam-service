@@ -46,11 +46,26 @@ func (store UserRepo) CreateUser(ctx context.Context, req model.User) model.Regi
 
 	// connect org and user
 	_, err = store.manager.CreateOrgUser(foundOrg.Id, userId)
+	
 	if err != nil {
 		log.Printf("User - org relationship failed")
 		return model.RegisterResp{User: model.User{}, Error: err}
 	}
-	return model.RegisterResp{User: req, Error: nil}		
+
+	permissions, err := store.manager.GetUserPermissions(foundOrg.Id, userId)
+
+	if err != nil {
+		log.Printf("GetUserPermissions failed")
+		return model.RegisterResp{User: model.User{}, Error: err}
+	}
+
+	return model.RegisterResp{User: model.User{
+		Id: userId,
+		Name: req.Name,
+		Surname: req.Surname,
+		Org: req.Org,
+		Permissions: permissions,
+	}, Error: nil}		
 
 }
 
@@ -91,5 +106,15 @@ func (store UserRepo) LoginUser(ctx context.Context, req model.LoginReq) model.L
 	}*/
 
 	return model.LoginResp{Token: "", Error: errors.New("Invalid mapping")}		
+}
+
+func (store UserRepo) GetUserPermissions(ctx context.Context, org_id string, user_id string) []string {
+	permissions, err := store.manager.GetUserPermissions(org_id, user_id)
+
+	if err != nil {
+		log.Println("User permissions not found")
+	}
+
+	return permissions
 }
 
