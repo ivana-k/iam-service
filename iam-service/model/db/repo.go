@@ -36,6 +36,9 @@ func (store UserRepo) CreateUser(ctx context.Context, req model.User) model.Regi
 			log.Printf("Insertion of new org failed.")
 			return model.RegisterResp{User: model.User{}, Error: err}
 		}
+	} else {
+		log.Printf("Organization already exists.")
+		return model.RegisterResp{User: model.User{}, Error: err}
 	}
 
 	userId, err := store.manager.InsertUser(ctx, req)
@@ -45,7 +48,7 @@ func (store UserRepo) CreateUser(ctx context.Context, req model.User) model.Regi
 	}
 
 	// connect org and user
-	_, err = store.manager.CreateOrgUser(foundOrg.Id, userId)
+	_, err = store.manager.CreateOrgUser(foundOrg.Id, userId, true)
 	
 	if err != nil {
 		log.Printf("User - org relationship failed")
@@ -53,7 +56,6 @@ func (store UserRepo) CreateUser(ctx context.Context, req model.User) model.Regi
 	}
 
 	permissions, err := store.manager.GetUserPermissions(foundOrg.Id, userId)
-	log.Println(permissions)
 
 	if err != nil {
 		log.Printf("GetUserPermissions failed")
@@ -66,6 +68,7 @@ func (store UserRepo) CreateUser(ctx context.Context, req model.User) model.Regi
 		Surname: req.Surname,
 		Org: req.Org,
 		Permissions: permissions,
+		Username: req.Username,
 	}, Error: nil}		
 
 }

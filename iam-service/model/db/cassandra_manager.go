@@ -34,43 +34,6 @@ func Connect() *gocql.Session {
 	return session
 }
 
-func (cm CassandraManager) InitDb() {
-	err := cm.session.Query("CREATE KEYSPACE IF NOT EXISTS apollo WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };").Exec()
-	if err != nil {
-		log.Println(err)
-	}
-
-	err = cm.session.Query("USE apollo;").Exec()
-	if err != nil {
-		log.Println(err)
-	}
-
-	err = cm.session.Query("CREATE TABLE IF NOT EXISTS org (id UUID PRIMARY KEY, name TEXT );").Exec()
-	if err != nil {
-		log.Println(err)
-	}
-
-	err = cm.session.Query("CREATE INDEX ON org (name);").Exec()
-	if err != nil {
-		log.Println(err)
-	}
-
-	err = cm.session.Query("CREATE TABLE IF NOT EXISTS permission (id UUID PRIMARY KEY, name TEXT);").Exec()
-	if err != nil {
-		log.Println(err)
-	}
-
-	err = cm.session.Query("CREATE TABLE IF NOT EXISTS user (id UUID PRIMARY KEY, name TEXT, surname TEXT, email TEXT, username TEXT, password TEXT, created_at DATE, updated_at DATE);").Exec()
-	if err != nil {
-		log.Println(err)
-	}
-
-	err = cm.session.Query("CREATE TABLE IF NOT EXISTS org_user (org_id UUID, user_id UUID, permissions SET<TEXT>, PRIMARY KEY (org_id, user_id));").Exec()
-	if err != nil {
-		log.Println(err)
-	}
-}
-
 func (cm CassandraManager) SeedDb() {
 	err := cm.session.Query("INSERT INTO permission (id, name) VALUES (uuid(), 'config.get') IF NOT EXISTS;").Exec()
 	if err != nil {
@@ -114,8 +77,8 @@ func (cm CassandraManager) SeedDb() {
 }
 
 const insertUserQuery = `
-INSERT INTO user (id, name, surname, email, password, username)
-VALUES (?, ?, ?, ?, ?, ?)`
+INSERT INTO user (id, name, surname, email, username)
+VALUES (?, ?, ?, ?, ?)`
 func (cm CassandraManager) InsertUser(ctx context.Context, user model.User) (string, error) {
 	id:=gocql.UUID{}
 	query := cm.session.Query(insertUserQuery,
@@ -123,7 +86,6 @@ func (cm CassandraManager) InsertUser(ctx context.Context, user model.User) (str
 		user.Name, 
 		user.Surname, 
 		user.Email,
-		user.Password,
 		user.Username, 
 		)
 
@@ -143,8 +105,7 @@ func (cm CassandraManager) FindOrgByName(ctx context.Context, orgName string) (m
 	var id gocql.UUID
 	var name string
     if err := query.WithContext(ctx).Consistency(gocql.One).Scan(&id, &name); err != nil {
-		log.Printf("FindOrgByName error")
-		log.Printf("Error: %v", err)
+		log.Printf("FindOrgByName Error: %v", err)
         return model.Org{}, err
     }
 
@@ -160,12 +121,11 @@ func (cm CassandraManager) GetAllPermissions() ([]string, error) {
 	iter := query.Iter()
 	
 	for iter.Scan(&id, &name) {
-		log.Printf("ID: %s, Name: %s", id, name)
 		permissions = append(permissions, name)
 	}
 
 	if err := iter.Close(); err != nil {
-		log.Fatal(err)
+		log.Printf("%s", err)
 	}
 
 	return permissions, nil
@@ -175,17 +135,10 @@ const findUserPermQuery = `SELECT permissions FROM org_user WHERE org_id = ? AND
 func (cm CassandraManager) GetUserPermissions(org_id string, user_id string) ([]string, error) {
 	query := cm.session.Query(findUserPermQuery, org_id, user_id)
 
-	var permissions map[string]struct{}
 	var foundPermissions []string
 	
-	if err := query.Scan(&permissions); err != nil {
-		log.Fatal(err)
-	}
-
-	log.Print("Permissions: ")
-	for permission := range permissions {
-		log.Printf("%s ", permission)
-		foundPermissions = append(foundPermissions, permission)
+	if err := query.Scan(&foundPermissions); err != nil {
+		log.Printf("Error for GetUserPermissions: %s", err)
 	}
 
 	return foundPermissions, nil
@@ -211,14 +164,13 @@ func (cm CassandraManager) InsertOrg(ctx context.Context, org model.Org) (model.
 }
 
 const createOrgUserQuery = `
-INSERT INTO org_user (org_id, user_id, permissions)
-VALUES (?, ?, ?)`
-func (cm CassandraManager) CreateOrgUser(org_uuid string, user_uuid string) (bool, error) {
+INSERT INTO org_user (org_id, user_id, permissions, is_owner)
+VALUES (?, ?, ?, ?)`
+func (cm CassandraManager) CreateOrgUser(org_uuid string, user_uuid string, is_owner bool) (bool, error) {
 	permissions, err:= cm.GetAllPermissions()
-	log.Printf("Array: %v", permissions)
 
 	if err != nil {
-		log.Fatal("Cannot find permissions")
+		log.Printf("Cannot find permissions: %s", err)
 	}
 
 	mapPermissions := arrayToSet(permissions)
@@ -226,6 +178,7 @@ func (cm CassandraManager) CreateOrgUser(org_uuid string, user_uuid string) (boo
         org_uuid, 
 		user_uuid, 
 		mapPermissions,
+		is_owner,
 		)
 
     if err := query.Exec(); err != nil {

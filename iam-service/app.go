@@ -16,6 +16,7 @@ import (
 	"log"
 	"net"
 	"sync"
+	natsgo "github.com/nats-io/nats.go"
 )
 
 type app struct {
@@ -76,10 +77,20 @@ func (a *app) GracefulStop(ctx context.Context) {
 }
 
 func (a *app) init() {
+	natsConn, err := newNatsConn(a.config.Nats().Uri())
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	a.shutdownProcesses = append(a.shutdownProcesses, func() {
+		log.Println("closing nats conn")
+		natsConn.Close()
+	})
+
 	manager := db.NewCassandraManager()
 	a.cm = manager
-	//a.cm.InitDb()
-	//a.cm.SeedDb()
+	
 	a.initUserRepo(a.cm)
 
 	a.initVaultClientService()
@@ -87,6 +98,30 @@ func (a *app) init() {
 
 	a.initAuthServiceServer()
 	a.initGrpcServer()
+}
+
+/*func (a *app) initNatsPublisher(conn *natsgo.Conn) {
+	publisher, err := nats.NewPublisher(conn)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	a.publisher = publisher
+}
+
+func (a *app) initAdministrationNatsSubscriber(conn *natsgo.Conn) {
+	administrationSubscriber, err := nats.NewSubscriber(conn, api.AdministrationReqSubject, "oort")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	a.administratorSubscriber = administrationSubscriber
+}*/
+
+func newNatsConn(uri string) (*natsgo.Conn, error) {
+	connection, err := natsgo.Connect(uri)
+	if err != nil {
+		return nil, err
+	}
+	return connection, nil
 }
 
 func (a *app) initGrpcServer() {
@@ -140,7 +175,7 @@ func (a *app) startGrpcServer() error {
 		return err
 	}
 	go func() {
-		log.Printf("server listening at PROMENAAAAA %v", lis.Addr())
+		log.Printf("server listening at %v", lis.Addr())
 		if err := a.grpcServer.Serve(lis); err != nil {
 			log.Fatalf("failed to serve: %v", err)
 		}

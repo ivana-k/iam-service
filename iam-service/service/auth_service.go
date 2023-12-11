@@ -6,6 +6,7 @@ import (
 	"context"
 	"iam-service/client"
 	"log"
+	"strings"
 	oort "github.com/c12s/oort/pkg/api"
 )
 
@@ -33,8 +34,6 @@ func (h AuthService) RegisterUser(ctx context.Context, req model.User) model.Reg
 			return model.RegisterResp{User: model.User{}, Error: err}
 		}
 
-		// ovde ti trebaju org_id i user_id iz kasandre
-		log.Println(registerResp.User.Permissions)
 		client.CreatePolicyAsync(registerResp.User.Org, 
 								registerResp.User.Username, 
 								getPermissionsForOort(registerResp.User.Permissions))
@@ -68,7 +67,7 @@ func (h AuthService) VerifyToken(req model.Token) model.InternalToken {
 	permissions := client.GetGrantedPermissions(response.Username)
 
 	// create jwt with permissions inside
-	token, err := CreateToken(response.Username, transformPermissions(permissions))
+	token, err := CreateToken(response.Username, transformPermissions(response.Username, permissions))
 	if err != nil {
 		return model.InternalToken{Verified: response.Verified, Jwt: ""}
 	}
@@ -76,13 +75,19 @@ func (h AuthService) VerifyToken(req model.Token) model.InternalToken {
 	return model.InternalToken{Verified: response.Verified, Jwt: token}
 }
 
-func transformPermissions(permissions []*oort.GrantedPermission) string {
+func (h AuthService) DecodeJwt(req model.Token) []string {
+	return GetClaimsFromJwt(req)
+}
+
+func transformPermissions(username string, permissions []*oort.GrantedPermission) string {
 	// format: perm_org, perm2_org, ...
 	var transformed string
 
 	if len(permissions) > 0 {
 		for _, perm := range permissions {
-			transformed = transformed + perm.Name + "_" + perm.Object.Id + ","
+			if !strings.Contains(perm.Object.Id, username) {
+				transformed = transformed + perm.Name + "|" + perm.Object.Id + ","
+			}
 		}
 		return transformed[:len(transformed)-1]
 	}

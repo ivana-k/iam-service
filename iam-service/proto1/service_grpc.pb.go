@@ -23,6 +23,7 @@ const (
 	AuthService_LoginUser_FullMethodName    = "/proto1.AuthService/LoginUser"
 	AuthService_Authorize_FullMethodName    = "/proto1.AuthService/Authorize"
 	AuthService_VerifyToken_FullMethodName  = "/proto1.AuthService/VerifyToken"
+	AuthService_DecodeJwt_FullMethodName    = "/proto1.AuthService/DecodeJwt"
 )
 
 // AuthServiceClient is the client API for AuthService service.
@@ -33,6 +34,7 @@ type AuthServiceClient interface {
 	LoginUser(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginResp, error)
 	Authorize(ctx context.Context, in *AuthorizationReq, opts ...grpc.CallOption) (*AuthorizationResp, error)
 	VerifyToken(ctx context.Context, in *Token, opts ...grpc.CallOption) (*VerifyResp, error)
+	DecodeJwt(ctx context.Context, in *Token, opts ...grpc.CallOption) (*DecodedJwtResp, error)
 }
 
 type authServiceClient struct {
@@ -79,6 +81,15 @@ func (c *authServiceClient) VerifyToken(ctx context.Context, in *Token, opts ...
 	return out, nil
 }
 
+func (c *authServiceClient) DecodeJwt(ctx context.Context, in *Token, opts ...grpc.CallOption) (*DecodedJwtResp, error) {
+	out := new(DecodedJwtResp)
+	err := c.cc.Invoke(ctx, AuthService_DecodeJwt_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthServiceServer is the server API for AuthService service.
 // All implementations must embed UnimplementedAuthServiceServer
 // for forward compatibility
@@ -87,6 +98,7 @@ type AuthServiceServer interface {
 	LoginUser(context.Context, *LoginReq) (*LoginResp, error)
 	Authorize(context.Context, *AuthorizationReq) (*AuthorizationResp, error)
 	VerifyToken(context.Context, *Token) (*VerifyResp, error)
+	DecodeJwt(context.Context, *Token) (*DecodedJwtResp, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
 
@@ -105,6 +117,9 @@ func (UnimplementedAuthServiceServer) Authorize(context.Context, *AuthorizationR
 }
 func (UnimplementedAuthServiceServer) VerifyToken(context.Context, *Token) (*VerifyResp, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method VerifyToken not implemented")
+}
+func (UnimplementedAuthServiceServer) DecodeJwt(context.Context, *Token) (*DecodedJwtResp, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DecodeJwt not implemented")
 }
 func (UnimplementedAuthServiceServer) mustEmbedUnimplementedAuthServiceServer() {}
 
@@ -191,6 +206,24 @@ func _AuthService_VerifyToken_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthService_DecodeJwt_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Token)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthServiceServer).DecodeJwt(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AuthService_DecodeJwt_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthServiceServer).DecodeJwt(ctx, req.(*Token))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthService_ServiceDesc is the grpc.ServiceDesc for AuthService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -213,6 +246,10 @@ var AuthService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "VerifyToken",
 			Handler:    _AuthService_VerifyToken_Handler,
+		},
+		{
+			MethodName: "DecodeJwt",
+			Handler:    _AuthService_DecodeJwt_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

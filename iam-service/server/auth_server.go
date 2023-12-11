@@ -34,7 +34,6 @@ func (o *AuthServiceServer) RegisterUser(ctx context.Context, req *proto1.User) 
 		Id: resp.User.Id, 
 		Name: resp.User.Name,
 		Surname: resp.User.Surname,
-		Password: resp.User.Password,
 		Email: resp.User.Email}}, resp.Error
 }
 
@@ -62,4 +61,16 @@ func (o *AuthServiceServer) VerifyToken(ctx context.Context, req *proto1.Token) 
 	return &proto1.VerifyResp{Token: &proto1.InternalToken{Verified: resp.Verified,
 		Jwt: resp.Jwt,
 		}}, nil
+}
+
+func (o *AuthServiceServer) DecodeJwt(ctx context.Context, req *proto1.Token) (*proto1.DecodedJwtResp, error) {
+	token, err := proto1.TokenToModel(req)
+
+	if err != nil {
+		return nil, err
+	}
+	
+	resp := o.service.DecodeJwt(*token)
+	log.Println(resp)
+	return &proto1.DecodedJwtResp{Permissions: resp}, nil
 }

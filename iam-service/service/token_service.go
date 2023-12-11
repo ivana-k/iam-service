@@ -6,9 +6,10 @@ import (
 	"iam-service/model"
 	"log"
 	"strings"
+	"os"
 )
 
-var secretKey = []byte("secret-key")
+var secretKey = []byte(os.Getenv("SECRET_KEY"))
 
 func CreateToken(username string, permissions string) (string, error) {
     token := jwt.NewWithClaims(jwt.SigningMethodHS256, 

@@ -27,3 +27,9 @@ func TokenToModel(req *Token) (*model.Token, error) {
 		Token: 			req.Token,
 	}, nil
 }
+
+func JwtToModel(req *InternalToken) (*model.Token, error) {
+	return &model.Token{
+		Token: 			req.Jwt,
+	}, nil
+}

@@ -48,6 +48,8 @@ func CreateOrgUserRelationship(org_id string, user_id string) error {
 
 	administratorClient := oort.NewOortAdministratorClient(conn)
 
+	log.Printf("Org za inherit: " + org_id)
+	log.Printf("User za inherit: " + user_id)
 	_, err = administratorClient.CreateInheritanceRel(context.TODO(), &oort.CreateInheritanceRelReq{
 		From: &oort.Resource{
 			Id:   org_id,
@@ -94,13 +96,16 @@ func GetGrantedPermissions(user string) []*oort.GrantedPermission {
 }
 
 func CreatePolicyAsync(org_id string, user string, permissions []*oort.Permission) {
-	administratorAsync, err := oort.NewAdministrationAsyncClient("oort:4222")
+	administratorAsync, err := oort.NewAdministrationAsyncClient("nats:4222")
 
 	if err != nil {
-		log.Fatalln(err)
+		log.Printf("Error calling CreatePolicyAsync: %s", err)
 	}
 
+	log.Printf("User za policy: " + user)
+	log.Printf("Org za policy: " + org_id)
 	for _, perm := range permissions {
+		log.Printf("Permission: " + perm.Name)
 		err := administratorAsync.SendRequest(&oort.CreatePolicyReq{
 			SubjectScope: &oort.Resource{
 				Id:   user,

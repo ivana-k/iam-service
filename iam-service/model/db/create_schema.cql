@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS apollo.org (
     id UUID PRIMARY KEY,
     name TEXT
 );
-CREATE INDEX ON apollo.org (name);
+CREATE INDEX IF NOT EXISTS ON apollo.org (name);
 
 CREATE TABLE IF NOT EXISTS apollo.permission (
     id UUID PRIMARY KEY,
@@ -23,7 +23,6 @@ CREATE TABLE IF NOT EXISTS apollo.user (
     surname TEXT,
     email TEXT,
     username TEXT,
-    password TEXT,
     created_at DATE,
     updated_at DATE
 );
@@ -44,3 +43,4 @@ INSERT INTO apollo.permission (id, name) VALUES (uuid(), 'node.put') IF NOT EXIS
 INSERT INTO apollo.permission (id, name) VALUES (uuid(), 'node.label.put') IF NOT EXISTS;
 INSERT INTO apollo.permission (id, name) VALUES (uuid(), 'node.label.get') IF NOT EXISTS;
 INSERT INTO apollo.permission (id, name) VALUES (uuid(), 'node.label.delete') IF NOT EXISTS;
+INSERT INTO apollo.permission (id, name) VALUES (uuid(), 'org.add') IF NOT EXISTS;
