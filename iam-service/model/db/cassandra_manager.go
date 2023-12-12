@@ -80,7 +80,7 @@ const insertUserQuery = `
 INSERT INTO user (id, name, surname, email, username)
 VALUES (?, ?, ?, ?, ?)`
 func (cm CassandraManager) InsertUser(ctx context.Context, user model.User) (string, error) {
-	id:=gocql.UUID{}
+	id:=gocql.TimeUUID()
 	query := cm.session.Query(insertUserQuery,
         id, 
 		user.Name, 
@@ -148,7 +148,7 @@ const insertOrgQuery = `
 INSERT INTO org (id, name)
 VALUES (?, ?)`
 func (cm CassandraManager) InsertOrg(ctx context.Context, org model.Org) (model.Org, error) {
-	orgUuid:=gocql.UUID{}
+	orgUuid:=gocql.TimeUUID()
 	query := cm.session.Query(insertOrgQuery,
         orgUuid, 
 		org.Name, 

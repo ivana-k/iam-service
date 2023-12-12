@@ -27,7 +27,9 @@ func (h AuthService) RegisterUser(ctx context.Context, req model.User) model.Reg
 	refClient := *h.v
 	registerResp := h.repo.CreateUser(ctx, req)
 
-	if registerResp.Error == nil {
+	if registerResp.Error != nil {
+		return registerResp
+	} else {
 		err:= client.CreateOrgUserRelationship(registerResp.User.Org, registerResp.User.Username)
 		if err != nil {
 			log.Printf("Error while creating inheritance rel: %v", err)
@@ -80,13 +82,13 @@ func (h AuthService) DecodeJwt(req model.Token) []string {
 }
 
 func transformPermissions(username string, permissions []*oort.GrantedPermission) string {
-	// format: perm_org, perm2_org, ...
+	// format: perm|kind|org, perm2|kind|org, ...
 	var transformed string
 
 	if len(permissions) > 0 {
 		for _, perm := range permissions {
 			if !strings.Contains(perm.Object.Id, username) {
-				transformed = transformed + perm.Name + "|" + perm.Object.Id + ","
+				transformed = transformed + perm.Name + "|" + perm.Object.Kind + "|" + perm.Object.Id + ","
 			}
 		}
 		return transformed[:len(transformed)-1]

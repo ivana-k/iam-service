@@ -35,6 +35,15 @@ message User {
   string username = 7;
 }
 
+message RegisteredUser {
+  string id = 1;
+  string name = 2;
+  string surname = 3;
+  string email = 4;
+  string org = 5;
+  string username = 6;
+}
+
 message Token {
   string token = 1;
 }

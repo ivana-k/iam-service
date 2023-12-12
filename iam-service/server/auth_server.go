@@ -23,14 +23,19 @@ func (o *AuthServiceServer) Authorize(ctx context.Context, req *proto1.Authoriza
 	return &proto1.AuthorizationResp{Authorized: true}, nil
 }
 
-func (o *AuthServiceServer) RegisterUser(ctx context.Context, req *proto1.User) (*proto1.RegisterResp, error) {
+func (o *AuthServiceServer) RegisterUser(ctx context.Context, req *proto1.User) (*proto1.RegResp, error) {
 	user, err := proto1.UserToModel(req)
 	if err != nil {
 		return nil, err
 	}
+
 	resp := o.service.RegisterUser(ctx, *user)
-	log.Println(resp.Error)
-	return &proto1.RegisterResp{User: &proto1.User{
+
+	if resp.Error != nil {
+		return &proto1.RegResp{User: &proto1.RegisteredUser{}}, resp.Error
+	}
+
+	return &proto1.RegResp{User: &proto1.RegisteredUser{
 		Id: resp.User.Id, 
 		Name: resp.User.Name,
 		Surname: resp.User.Surname,

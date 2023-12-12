@@ -5,12 +5,17 @@ import (
 )
 
 func UserToModel(req *User) (*model.User, error) {
+	org := req.Org
+
+	if org == "" {
+		org = req.Username + "_default"
+	}
 	return &model.User{
 		Name:       		 req.Name,
 		Surname:         	 req.Surname,
 		Email: 				 req.Email,
 		Password:            req.Password,
-		Org:            	 req.Org,
+		Org:            	 org,
 		Username:            req.Username,
 	}, nil
 }

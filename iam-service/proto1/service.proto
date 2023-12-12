@@ -7,7 +7,7 @@ package proto1;
 import "modelauth.proto";
 
 service AuthService {
-  rpc RegisterUser(User) returns (RegisterResp) {}
+  rpc RegisterUser(User) returns (RegResp) {}
   rpc LoginUser(LoginReq) returns (LoginResp) {}
   rpc Authorize(AuthorizationReq) returns (AuthorizationResp) {}
   rpc VerifyToken(Token) returns (VerifyResp) {}
@@ -25,8 +25,8 @@ message AuthorizationResp {
   bool authorized = 1;
 }
 
-message RegisterResp {
-    User user = 1;
+message RegResp {
+  RegisteredUser user = 1;
 }
 
 message LoginReq {

@@ -18,13 +18,14 @@ CREATE TABLE IF NOT EXISTS apollo.permission (
 );
 
 CREATE TABLE IF NOT EXISTS apollo.user (
-    id UUID PRIMARY KEY,
+    id UUID,
     name TEXT,
     surname TEXT,
     email TEXT,
     username TEXT,
     created_at DATE,
-    updated_at DATE
+    updated_at DATE,
+    PRIMARY KEY (id, username)
 );
 
 CREATE TABLE IF NOT EXISTS apollo.org_user (

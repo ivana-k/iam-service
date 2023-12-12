@@ -53,7 +53,7 @@ func CreateOrgUserRelationship(org_id string, user_id string) error {
 	_, err = administratorClient.CreateInheritanceRel(context.TODO(), &oort.CreateInheritanceRelReq{
 		From: &oort.Resource{
 			Id:   org_id,
-			Kind: "user-group",
+			Kind: "org",
 		},
 		To:   &oort.Resource{
 			Id:   user_id,
@@ -105,7 +105,6 @@ func CreatePolicyAsync(org_id string, user string, permissions []*oort.Permissio
 	log.Printf("User za policy: " + user)
 	log.Printf("Org za policy: " + org_id)
 	for _, perm := range permissions {
-		log.Printf("Permission: " + perm.Name)
 		err := administratorAsync.SendRequest(&oort.CreatePolicyReq{
 			SubjectScope: &oort.Resource{
 				Id:   user,
@@ -113,7 +112,7 @@ func CreatePolicyAsync(org_id string, user string, permissions []*oort.Permissio
 			},
 			ObjectScope:  &oort.Resource{
 				Id:   org_id,
-				Kind: "user-group",
+				Kind: "org",
 			},
 			Permission:   perm,
 		}, func(resp *oort.AdministrationAsyncResp) {

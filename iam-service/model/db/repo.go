@@ -37,8 +37,7 @@ func (store UserRepo) CreateUser(ctx context.Context, req model.User) model.Regi
 			return model.RegisterResp{User: model.User{}, Error: err}
 		}
 	} else {
-		log.Printf("Organization already exists.")
-		return model.RegisterResp{User: model.User{}, Error: err}
+		return model.RegisterResp{User: model.User{}, Error: errors.New("Organization already exists.")}
 	}
 
 	userId, err := store.manager.InsertUser(ctx, req)
@@ -69,48 +68,12 @@ func (store UserRepo) CreateUser(ctx context.Context, req model.User) model.Regi
 		Org: req.Org,
 		Permissions: permissions,
 		Username: req.Username,
+		Email: req.Email,
 	}, Error: nil}		
 
 }
 
-
-
 func (store UserRepo) LoginUser(ctx context.Context, req model.LoginReq) model.LoginResp {
-	/*cypher, params := store.factory.findUser(req)
-
-	result, err := store.manager.ReadTransaction(cypher, params)
-	if err != nil {
-		return model.LoginResp{Token: "", Error: err}
-	}
-
-	records, ok := result.([]*neo4j.Record)
-	if !ok {
-		return model.LoginResp{Token: "", Error: errors.New("invalid resp format")}
-	}
-
-	for _, record := range records {
-		userProps, found := record.Get("user")
-		if !found {
-			fmt.Println("User not found in record")
-			return model.LoginResp{Token: "", Error: errors.New("User not found in record")}
-		}
-
-		if userNode, ok := userProps.(neo4j.Node); ok {
-			userMap := userNode.Props
-			name := userMap["name"].(string)
-			permission := userMap["permission"].(string)
-			isAuthorized := client.AuthorizeUser(permission, name)
-			if isAuthorized {
-				token, _ := service.CreateToken(name, "ALLOW", userMap["permission"].(string))
-				return model.LoginResp{Token: token, Error: nil}
-			} 
-				
-		} else {
-			fmt.Println("invalid mapping")
-		}
-		
-	}*/
-
 	return model.LoginResp{Token: "", Error: errors.New("Invalid mapping")}		
 }
 
