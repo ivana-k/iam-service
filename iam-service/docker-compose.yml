@@ -5,7 +5,7 @@ services:
   iam-service:
     build:
       context: ../
-      dockerfile: ./iam-service/Dockerfile
+      dockerfile: ./iam-service/iam-service/Dockerfile
     image: iam-service
     container_name: iam-service
     hostname: ${IAM_HOSTNAME}
@@ -55,15 +55,15 @@ services:
     ports:
       - ${VAULT_HTTP_PORT}:${VAULT_HTTP_PORT}
     volumes:
-        - ./iam-service/vault/config:/vault/config
-        - ./iam-service/vault/data:/vault/data
+        - ./iam-service/iam-service/vault/config:/vault/config
+        - ./iam-service/iam-service/vault/data:/vault/data
     environment:
       - VAULT_ADDR=http://0.0.0.0:8200
       - VAULT_API_ADDR=http://0.0.0.0:8200
       - VAULT_ADDRESS=http://0.0.0.0:8200
     cap_add:
       - IPC_LOCK
-    command: vault server -config=./iam-service/vault/config/vault.json
+    command: vault server -config=./iam-service/iam-service/vault/config/vault.json
 
 networks:
   network:

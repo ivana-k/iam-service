@@ -30,6 +30,7 @@ WORKDIR /root/
 
 # Copy the Pre-built binary file from the previous stage
 COPY --from=builder /app/main .
+COPY --from=builder /app/vault/config/api_key.json /root/
 
 # Expose port 8001 to the outside world
 EXPOSE 8001
@@ -37,9 +38,6 @@ EXPOSE 8001
 # Command to run the executable
 CMD ["./main"] 
 
-#FROM cassandra:latest
-#COPY ./iam-service/model/db/create_schema.cql ./create_schema.cql
-#ENV CASSANDRA_BROADCAST_ADDRESS="cassandra"
-#CMD ["cqlsh", "cassandra", "-f", "/create_schema.cql"]
+
 
 
