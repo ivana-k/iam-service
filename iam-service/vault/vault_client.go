@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 	"os"
+	"fmt"
 	"io/ioutil"
 	"encoding/json"
 	vault "github.com/hashicorp/vault-client-go"
@@ -18,6 +19,7 @@ type VaultClientService struct {
 
 type VaultKey struct {
 	RootKey string `json:"root_key"`
+	UnsealKey string `json:"unseal_key"`
 }
 
 // init
@@ -28,45 +30,44 @@ func NewVaultClientService() (*VaultClientService, error) {
 }
 
 func initClient() *vault.Client {
+	vaultAddress := fmt.Sprintf("http://%s:%s", 
+								os.Getenv("VAULT_HOSTNAME"), 
+								os.Getenv("VAULT_HTTP_PORT"))
+
 	client, err := vault.New(
-		vault.WithAddress("http://vault:8200"),
+		vault.WithAddress(vaultAddress),
 		vault.WithRequestTimeout(30*time.Second),
 	)
+
 	if err != nil {
-		log.Println(err)
+		log.Printf("Error creating vault client %v", err)
 	}
 
 	// check if its initialized
-	initResp, err := client.System.ReadInitializationStatus(
-		context.Background(),
-	)
+	initResp, err := client.System.ReadInitializationStatus(context.Background(),)
 	if err != nil {
-		log.Println(err)
+		log.Printf("Init status error: %v", err)
 	}
 
-	log.Println(initResp)
 	initStatus := initResp.Data["initialized"].(bool)
 
 	if initStatus {
 		log.Println("Vault already initialized.")
 		vaultKey := loadKeyFromJson()
-		log.Println(vaultKey.RootKey)
 		if err := client.SetToken(vaultKey.RootKey); err != nil {
 			log.Printf("Error while trying to set vault token: %v" , err)
 		}
 
-		Unseal(client, "firstKey")
-
+		Unseal(client, vaultKey.UnsealKey)
 		return client
 	}
 
 	// init
 	initializedVault := Initialize(client)
-
-	log.Println("root token:")
-	log.Println(initializedVault.rootKey)
-	var vaultKey VaultKey
-	vaultKey.RootKey = initializedVault.rootKey
+	vaultKey := VaultKey{
+		RootKey: initializedVault.rootKey,
+		UnsealKey: initializedVault.keysArray[0].(string),
+	}
 	saveKeyToJson(vaultKey)
 
 	// auth
@@ -74,7 +75,7 @@ func initClient() *vault.Client {
 		log.Fatal(err)
 	}
 
-	Unseal(client, initializedVault.keysArray[0].(string))
+	Unseal(client, vaultKey.UnsealKey)
 	MountSecretEngine(client)
 
 	return client
@@ -102,7 +103,7 @@ func (v VaultClientService) RegisterUser(username string, password string, polic
 	
 }
 
-func (v VaultClientService) LoginUser(req model.LoginReq) string {
+func (v VaultClientService) LoginUser(req model.LoginReq) model.LoginResp {
 	resp, err := v.client.Auth.UserpassLogin(
 		context.Background(),
 		req.Username,
@@ -113,13 +114,10 @@ func (v VaultClientService) LoginUser(req model.LoginReq) string {
 	)
 	if err != nil {
 		log.Printf("VaultLogin error: %v", err)
-		return ""
+		return model.LoginResp{Token: "", Error: err}
 	}
 
-	log.Println("vault login finished")
-	log.Println(resp)
-
-	return resp.Auth.ClientToken
+	return model.LoginResp{Token: resp.Auth.ClientToken, Error: nil}
 }
 
 func (v VaultClientService) VerifyToken(token string) model.VerificationResp {
@@ -200,10 +198,9 @@ func MountSecretEngine(client *vault.Client) {
 	}
 }
 
+var path = os.Getenv("VAULT_KEYS_FILE")
 
 func loadKeyFromJson() VaultKey {
-	path := "api_key.json"
-
 	jsonFile, err := os.ReadFile(path)
 	if err != nil {
 		log.Printf("%s", err)
@@ -219,15 +216,12 @@ func loadKeyFromJson() VaultKey {
 }
 
 func saveKeyToJson(vaultKey VaultKey) {
-	path := "api_key.json"
-
 	updatedJSON, err := json.MarshalIndent(vaultKey, "", "  ")
 	if err != nil {
 		log.Println("Error marshaling JSON:", err)
 		return
 	}
 
-	// Write the updated JSON back to the file
 	err = ioutil.WriteFile(path, updatedJSON, 0644)
 	if err != nil {
 		log.Println("Error writing JSON file:", err)

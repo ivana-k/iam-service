@@ -49,8 +49,11 @@ func (h AuthService) RegisterUser(ctx context.Context, req model.User) model.Reg
 
 func (h AuthService) LoginUser(req model.LoginReq) model.LoginResp {
 	refClient := *h.v
-	token:= refClient.LoginUser(req)
-	return model.LoginResp{Token: token, Error: nil}
+	loginResp := refClient.LoginUser(req)
+	if loginResp.Error != nil {
+		return loginResp
+	}
+	return model.LoginResp{Token: loginResp.Token, Error: nil}
 }
 
 func (h AuthService) Autorize(req model.AuthorizationReq) model.AuthorizationResp {

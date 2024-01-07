@@ -5,7 +5,6 @@ type InternalToken struct {
 	Jwt string `json:"jwt"`
 }
 
-
 type VerificationResp struct {
 	Verified bool 
 	Username string 
