@@ -19,9 +19,9 @@ Provides registration to user. This endpoint also creates new organization, new 
 
 |parameter| type  |                    description                      |
 |---------|-------|-----------------------------------------------------|
-| email    | string  | **Required.**  |
-| username    | string  | **Required.** Used later for login |
-| name    | string  | **Required.**  |
-| surname    | string  | **Required.**  |
+| email    | string  | **Required.** User's email. |
+| username    | string  | **Required.** Should be unique. Used later for login. Accepted characters: alphanumeric plus "_", "-", "." |
+| name    | string  | First name of the user.  |
+| surname    | string  | Surname of the user.  |
 | password    | string  | **Required.** Stored securely on Vault server. |
-| org    | string  | **Required.** Name of the organization. Should be unique. If not provided, it will be created as username_default_org |
+| org    | string  | **Required.** Name of the organization. Should be unique. If not provided, it will be created as username_default |
