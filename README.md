@@ -1,10 +1,27 @@
 # iam-service
 
-Da bi se servis uspesno pokrenuo sa oort-om, potrebno je oort i magnetar servis postaviti u isti folder gde je i iam-service.
-iam-service i oort komuniciraju preko network1 external mreze.
+Identity management service providing:
+- user registration
+- user organization management
+- user sign in with Vault
+- token verification
+- granting permissions for authorization purposes
 
-Komande za kreiranje cassandra keyspace (ukoliko ne postoji):
-- docker exec -it cassandra cqlsh
-- CREATE KEYSPACE IF NOT EXISTS apollo WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };
+Integrated with:
+- Vault
+- Oort policy engine
 
-Port na kom je iam-service: 8002
+## POST /user/register route
+
+### Description
+
+Provides registration to user. This endpoint also creates new organization, new user on Vault and creates org - user relationship with default org permissions on Oort service. Each user is owner of his own organization and receives default permissions upon registration.
+
+|parameter| type  |                    description                      |
+|---------|-------|-----------------------------------------------------|
+| email    | string  | **Required.**  |
+| username    | string  | **Required.** Used later for login |
+| name    | string  | **Required.**  |
+| surname    | string  | **Required.**  |
+| password    | string  | **Required.** Stored securely on Vault server. |
+| org    | string  | **Required.** Name of the organization. Should be unique. If not provided, it will be created as username_default_org |
