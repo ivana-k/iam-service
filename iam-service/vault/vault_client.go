@@ -2,23 +2,24 @@ package vault
 
 import (
 	"context"
-	"log"
-	"time"
-	"os"
-	"fmt"
-	"io/ioutil"
 	"encoding/json"
+	"fmt"
+	"iam-service/model"
+	"io/ioutil"
+	"log"
+	"os"
+	"time"
+
 	vault "github.com/hashicorp/vault-client-go"
 	schema "github.com/hashicorp/vault-client-go/schema"
-	"iam-service/model"
 )
 
 type VaultClientService struct {
-	client *vault.Client 
+	client *vault.Client
 }
 
 type VaultKey struct {
-	RootKey string `json:"root_key"`
+	RootKey   string `json:"root_key"`
 	UnsealKey string `json:"unseal_key"`
 }
 
@@ -30,9 +31,9 @@ func NewVaultClientService() (*VaultClientService, error) {
 }
 
 func initClient() *vault.Client {
-	vaultAddress := fmt.Sprintf("http://%s:%s", 
-								os.Getenv("VAULT_HOSTNAME"), 
-								os.Getenv("VAULT_HTTP_PORT"))
+	vaultAddress := fmt.Sprintf("http://%s:%s",
+		os.Getenv("VAULT_HOSTNAME"),
+		os.Getenv("VAULT_HTTP_PORT"))
 
 	client, err := vault.New(
 		vault.WithAddress(vaultAddress),
@@ -44,7 +45,7 @@ func initClient() *vault.Client {
 	}
 
 	// check if its initialized
-	initResp, err := client.System.ReadInitializationStatus(context.Background(),)
+	initResp, err := client.System.ReadInitializationStatus(context.Background())
 	if err != nil {
 		log.Printf("Init status error: %v", err)
 	}
@@ -55,7 +56,7 @@ func initClient() *vault.Client {
 		log.Println("Vault already initialized.")
 		vaultKey := loadKeyFromJson()
 		if err := client.SetToken(vaultKey.RootKey); err != nil {
-			log.Printf("Error while trying to set vault token: %v" , err)
+			log.Printf("Error while trying to set vault token: %v", err)
 		}
 
 		Unseal(client, vaultKey.UnsealKey)
@@ -65,7 +66,7 @@ func initClient() *vault.Client {
 	// init
 	initializedVault := Initialize(client)
 	vaultKey := VaultKey{
-		RootKey: initializedVault.rootKey,
+		RootKey:   initializedVault.rootKey,
 		UnsealKey: initializedVault.keysArray[0].(string),
 	}
 	saveKeyToJson(vaultKey)
@@ -86,8 +87,8 @@ func (v VaultClientService) RegisterUser(username string, password string, polic
 		context.Background(),
 		username,
 		schema.UserpassWriteUserRequest{
-			Password: password,
-			Policies: policies,
+			Password:    password,
+			Policies:    policies,
 			TokenPeriod: "0.5h",
 		},
 		vault.WithMountPath("userpass"),
@@ -100,7 +101,6 @@ func (v VaultClientService) RegisterUser(username string, password string, polic
 		log.Println(resp)
 	}
 
-	
 }
 
 func (v VaultClientService) LoginUser(req model.LoginReq) model.LoginResp {
@@ -133,9 +133,9 @@ func (v VaultClientService) VerifyToken(token string) model.VerificationResp {
 		return model.VerificationResp{Verified: false, Username: ""}
 	}
 
-	expTime:= resp.Data["expire_time"].(string)
-	metaMap:= resp.Data["meta"].(map[string]interface{})
-	username:=metaMap["username"].(string)
+	expTime := resp.Data["expire_time"].(string)
+	metaMap := resp.Data["meta"].(map[string]interface{})
+	username := metaMap["username"].(string)
 	timestamp, err := time.Parse(time.RFC3339Nano, expTime)
 
 	if err != nil {
@@ -153,9 +153,9 @@ func Initialize(client *vault.Client) VaultClient {
 	resp, err := client.System.Initialize(
 		context.Background(),
 		schema.InitializeRequest{
-			PgpKeys: nil,
+			PgpKeys:         nil,
 			RootTokenPgpKey: "",
-			SecretShares: 1,
+			SecretShares:    1,
 			SecretThreshold: 1,
 		},
 	)
@@ -176,7 +176,7 @@ func Unseal(client *vault.Client, firstKey string) {
 	_, err := client.System.Unseal(
 		context.Background(),
 		schema.UnsealRequest{
-			Key: firstKey,		// first key in array
+			Key: firstKey, // first key in array
 		},
 	)
 	if err != nil {
@@ -190,7 +190,7 @@ func MountSecretEngine(client *vault.Client) {
 		"userpass",
 		schema.AuthEnableMethodRequest{
 			Description: "Mount for user identity",
-			Type: "userpass",
+			Type:        "userpass",
 		},
 	)
 	if err != nil {

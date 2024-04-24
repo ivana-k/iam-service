@@ -2,16 +2,17 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"iam-service/proto1"
 	"iam-service/service"
-	"google.golang.org/grpc/status"
+
 	"google.golang.org/grpc/codes"
-	"fmt"
+	"google.golang.org/grpc/status"
 )
 
 type AuthServiceServer struct {
 	service service.AuthService
-	proto1.UnimplementedAuthServiceServer	
+	proto1.UnimplementedAuthServiceServer
 }
 
 func NewAuthServiceServer(service service.AuthService) (proto1.AuthServiceServer, error) {
@@ -37,10 +38,10 @@ func (o *AuthServiceServer) RegisterUser(ctx context.Context, req *proto1.User) 
 	}
 
 	return &proto1.RegResp{User: &proto1.RegisteredUser{
-		Id: resp.User.Id, 
-		Name: resp.User.Name,
+		Id:      resp.User.Id,
+		Name:    resp.User.Name,
 		Surname: resp.User.Surname,
-		Email: resp.User.Email}}, nil
+		Email:   resp.User.Email}}, nil
 }
 
 func (o *AuthServiceServer) LoginUser(ctx context.Context, req *proto1.LoginReq) (*proto1.LoginResp, error) {
@@ -49,7 +50,7 @@ func (o *AuthServiceServer) LoginUser(ctx context.Context, req *proto1.LoginReq)
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Error in login request")
 	}
-	
+
 	resp := o.service.LoginUser(*user)
 
 	if resp.Error != nil {
@@ -65,16 +66,17 @@ func (o *AuthServiceServer) VerifyToken(ctx context.Context, req *proto1.Token) 
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Error in token request")
 	}
-	
-	resp := o.service.VerifyToken(*token)
+
+	resp, username := o.service.VerifyToken(*token)
 
 	if !resp.Verified {
 		return nil, status.Error(codes.Unauthenticated, "Invalid token")
 	}
-	
+
 	return &proto1.VerifyResp{Token: &proto1.InternalToken{Verified: resp.Verified,
 		Jwt: resp.Jwt,
-		}}, nil
+	},
+		Username: username}, nil
 }
 
 func (o *AuthServiceServer) DecodeJwt(ctx context.Context, req *proto1.Token) (*proto1.DecodedJwtResp, error) {
@@ -83,7 +85,7 @@ func (o *AuthServiceServer) DecodeJwt(ctx context.Context, req *proto1.Token) (*
 	if err != nil {
 		return nil, status.Error(codes.Internal, "Error in decoding jwt")
 	}
-	
+
 	resp := o.service.DecodeJwt(*token)
 	return &proto1.DecodedJwtResp{Permissions: resp}, nil
 }

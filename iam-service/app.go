@@ -5,28 +5,28 @@ import (
 	"errors"
 	"fmt"
 	"iam-service/configs"
-	"iam-service/vault"
 	"iam-service/model"
-	"iam-service/proto1"
 	"iam-service/model/db"
-	"iam-service/service"
+	"iam-service/proto1"
 	"iam-service/server"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
+	"iam-service/service"
+	"iam-service/vault"
 	"log"
 	"net"
 	"sync"
-	natsgo "github.com/nats-io/nats.go"
+
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 type app struct {
 	config                    configs.Config
 	grpcServer                *grpc.Server
 	authServiceServer         proto1.AuthServiceServer
-	authService 			  *service.AuthService
-	vaultService 			  *vault.VaultClientService
-	authRepo                  model.UserRepo		
-	cm						  *db.CassandraManager
+	authService               *service.AuthService
+	vaultService              *vault.VaultClientService
+	authRepo                  model.UserRepo
+	cm                        *db.CassandraManager
 	shutdownProcesses         []func()
 	gracefulShutdownProcesses []func(wg *sync.WaitGroup)
 }
@@ -77,20 +77,9 @@ func (a *app) GracefulStop(ctx context.Context) {
 }
 
 func (a *app) init() {
-	natsConn, err := newNatsConn(a.config.Nats().Uri())
-
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	a.shutdownProcesses = append(a.shutdownProcesses, func() {
-		log.Println("closing nats conn")
-		natsConn.Close()
-	})
-
 	manager := db.NewCassandraManager()
 	a.cm = manager
-	
+
 	a.initUserRepo(a.cm)
 
 	a.initVaultClientService()
@@ -100,32 +89,8 @@ func (a *app) init() {
 	a.initGrpcServer()
 }
 
-/*func (a *app) initNatsPublisher(conn *natsgo.Conn) {
-	publisher, err := nats.NewPublisher(conn)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	a.publisher = publisher
-}
-
-func (a *app) initAdministrationNatsSubscriber(conn *natsgo.Conn) {
-	administrationSubscriber, err := nats.NewSubscriber(conn, api.AdministrationReqSubject, "oort")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	a.administratorSubscriber = administrationSubscriber
-}*/
-
-func newNatsConn(uri string) (*natsgo.Conn, error) {
-	connection, err := natsgo.Connect(uri)
-	if err != nil {
-		return nil, err
-	}
-	return connection, nil
-}
-
 func (a *app) initGrpcServer() {
-	
+
 	if a.authServiceServer == nil {
 		log.Fatalln("eval grpc server is nil")
 	}
